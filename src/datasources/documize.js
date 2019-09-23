@@ -1,21 +1,21 @@
 const { RESTDataSource } = require('apollo-datasource-rest');
 const _ = require('lodash');
+const base64
+class DocumizeRestAPI extends RESTDataSource {
 
-class RocketChatAPI extends RESTDataSource {
-
-    constructor({ baseURL, authToken, userId}) {
+    constructor({ baseURL, email, password}) {
         super();
 
         this.baseURL = baseURL;
-        this.authToken = authToken;
-        this.userId = userId;
+        this.email = email;
+        this.password = password;
     }
 
     willSendRequest(request) {
         request.headers.set('X-Auth-Token', this.authToken);
         request.headers.set('X-User-Id', this.userId);
     }
-
+    static retrieveTokenForRequest(baseURL, email, password)
     static messageSearchResultReducer(message, roomId) {
         return {
             id: message._id,
@@ -31,7 +31,7 @@ class RocketChatAPI extends RESTDataSource {
         const response = await this.get('chat.search', { searchText: searchString, roomId: roomId });
 
         return Array.isArray(response.messages)
-            ? response.messages.map(message=> RocketChatAPI.messageSearchResultReducer(message, roomId))
+            ? response.messages.map(message=> DocumizeRestAPI.messageSearchResultReducer(message, roomId))
             : [];
     }
 
@@ -51,4 +51,4 @@ class RocketChatAPI extends RESTDataSource {
     }
 }
 
-module.exports = RocketChatAPI;
+module.exports = DocumizeRestAPI;

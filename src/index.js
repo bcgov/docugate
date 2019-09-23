@@ -2,9 +2,9 @@ require('dotenv').config({
     path: '.env.production',
 });
 
-const {ApolloServer, gql} = require('apollo-server');
+import { ApolloServer, gql } from 'apollo-server';
 
-const RocketChatAPI = require('./datasources/documize');
+import RocketChatAPI from './datasources/documize';
 
 // Type definitions define the "shape" of your data and specify
 // which ways the data can be fetched from the GraphQL server.
