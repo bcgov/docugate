@@ -3,6 +3,7 @@ kind: Template
 metadata:
   name: docugate-dc-templates
 labels:
+  app: docugate
   template: docugate
 objects:
 - apiVersion: v1
@@ -16,6 +17,8 @@ objects:
   kind: DeploymentConfig
   metadata:
     name: ${NAME}${SUFFIX}
+    labels:
+      app: docugate
   spec:
     minReadySeconds: 20 # should be ready for atleast 20 seconds before the container is considered available. This will allow us
     # to catch any errors on deploy before they are available to the web
@@ -77,6 +80,8 @@ objects:
   kind: Service
   metadata:
     name: ${NAME}${SUFFIX}
+    labels:
+      app: docugate
   spec:
     ports:
     - name: web
@@ -88,6 +93,8 @@ objects:
 - apiVersion: route.openshift.io/v1
   kind: Route
   metadata:
+    labels:
+      app: docugate
     annotations:
       haproxy.router.openshift.io/disable_cookies: 'true'
     name: ${NAME}${SUFFIX}
@@ -106,14 +113,18 @@ objects:
 - apiVersion: v1
   kind: ConfigMap
   metadata:
-      name: ${NAME}-config
-  stringData:
+    labels:
+      app: docugate
+    name: ${NAME}-config
+  data:
     docugateBaseUrl: ${DOCUGATE_BASE_URL}
 - apiVersion: v1
   kind: ConfigMap
   metadata:
-      name: ${NAME}-search-config
-  stringData:
+    labels:
+      app: docugate
+    name: ${NAME}-search-config
+  data:
     # this is the additional arguments that are passed to the documizer /api/search request body
     # in curl it would look like. 
     # curl https://docs.pathfinder.gov.bc.ca/api/search -X POST -d '{"keywords": "develop", "doc": true, "tag": true, "content": true}'
@@ -148,6 +159,11 @@ parameters:
   name: HOST
   required: false
   value: ''
+- description: The namespace the image is being pulled from
+  displayName: Image namespace
+  name: IMAGE_NAMESPACE
+  required: true
+  value: "devhub-tools"
 - description: Base URL of the Documize instance to be searched
   displayName: Rocket.Chat Base URL
   name: DOCUGATE_BASE_URL
