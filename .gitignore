@@ -63,3 +63,5 @@ typings/
 # production settings
 .env.production
 dist/*
+.env
+.env.production

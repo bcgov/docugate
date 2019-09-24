@@ -1,0 +1,6 @@
+{
+  "defaultResultLimit": 25,
+  "defaultSearchOptions": {
+    "doc": true, "tag": true, "content": true
+  }
+}

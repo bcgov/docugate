@@ -1,54 +1,44 @@
-const { RESTDataSource } = require('apollo-datasource-rest');
-const _ = require('lodash');
-const base64
+/* eslint-disable require-jsdoc */
+import {RESTDataSource} from 'apollo-datasource-rest';
+import _ from 'lodash';
+import config from '../../config/index.json';
+
 class DocumizeRestAPI extends RESTDataSource {
+  constructor({baseURL}) {
+    super();
 
-    constructor({ baseURL, email, password}) {
-        super();
+    this.baseURL = baseURL;
+  }
 
-        this.baseURL = baseURL;
-        this.email = email;
-        this.password = password;
-    }
+  // eslint-disable-next-line valid-jsdoc
+  /**
+   * formats search results to be consumed by the apollo api,
+   * specifically it adds a path property that can point a user to the document within the documize instance
+   * @param {Object} result the documize search result
+   */
+  reduceDocumizeSearch(result) {
+    return ({
+      ...result,
+      url: `${this.baseURL}/s/${result.spaceId}/${result.spaceSlug}/d/${result.documentId}/${result.documentSlug}`,
+    });
+  }
 
-    willSendRequest(request) {
-        request.headers.set('X-Auth-Token', this.authToken);
-        request.headers.set('X-User-Id', this.userId);
-    }
-    static retrieveTokenForRequest(baseURL, email, password)
-    static messageSearchResultReducer(message, roomId) {
-        return {
-            id: message._id,
-            message: message.msg,
-            author: message.u.name,
-            time: message.ts,
-            roomId: roomId
-        };
-    }
-
-    async searchRoom({ roomId, searchString }) {
-
-        const response = await this.get('chat.search', { searchText: searchString, roomId: roomId });
-
-        return Array.isArray(response.messages)
-            ? response.messages.map(message=> DocumizeRestAPI.messageSearchResultReducer(message, roomId))
-            : [];
-    }
-
-    async searchRooms({ roomIds, searchString }) {
-
-        const allSearchResultsArrays = await Promise.all(
-            roomIds.map(roomId => this.searchRoom({ roomId, searchString }))
-        );
-
-        return _.flatten(allSearchResultsArrays);
-    }
-
-    async getRoomInfo({ roomId}) {
-        const response = await this.get('rooms.info', { roomId: roomId });
-
-        return response.room
-    }
+  /**
+   * Searches documize api
+   * @param {String} keywords the search query
+   * @param {Number} limit the search result limit, this does not pass a limit value to the documize
+   * api
+   * @param {Object} searchOptions based on the remaining properties passed in the search request
+   * body
+   * see https://docs.documize.com/s/WtXNJ7dMOwABe2UK/api/d/Wt8bAncHWQABMuOp/search
+   */
+  async search(keywords, limit = config.defaultResultLimit, searchOptions = config.defaultSearchOptions) {
+    const data = await this.post('api/search', {
+      keywords,
+      ...searchOptions,
+    });
+    return data.slice(0, limit).map(this.reduceDocumizeSearch.bind(this));
+  }
 }
 
-module.exports = DocumizeRestAPI;
+export default DocumizeRestAPI;
