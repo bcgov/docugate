@@ -57,14 +57,14 @@ objects:
               memory: '256Mi'
           volumeMounts:
           - name: ${NAME}-search-config-volume
-            mountPath: /config
+            mountPath: /opt/app-root/src/config
             readOnly: true
           env:
-          - name: DOCUGATE_BASE_URL
+          - name: DOCUMIZE_BASE_URL
             valueFrom:
               configMapKeyRef:
                 name: docugate-config
-                key: docugateBaseUrl
+                key: documizeBaseUrl
     test: false
     triggers:
     - type: ConfigChange
@@ -117,7 +117,7 @@ objects:
       app: docugate
     name: ${NAME}-config
   data:
-    docugateBaseUrl: ${DOCUGATE_BASE_URL}
+    documizeBaseUrl: ${DOCUMIZE_BASE_URL}
 - apiVersion: v1
   kind: ConfigMap
   metadata:
@@ -128,14 +128,20 @@ objects:
     # this is the additional arguments that are passed to the documizer /api/search request body
     # in curl it would look like. 
     # curl https://docs.pathfinder.gov.bc.ca/api/search -X POST -d '{"keywords": "develop", "doc": true, "tag": true, "content": true}'
+    # defaultResultLimit is not passed onto documize api, this is internally consumed
+    # defaultSearchOptions are additional options that are passed to the documize /api/search POST request body
+    #   doc: {Boolean} # search against document titles
+    #   tag: {Boolean} # search against document tags
+    #   content: {Boolean} # search against document content
+    #   attachments: {Boolean} # search against document attachment titles
     index.json: |-
       {
-        "defaultResultLimit": 25, # defaultResultLimit is not passed onto documize api, this is internally consumed
+        "defaultResultLimit": 25, 
         "defaultSearchOptions": {
-          "doc": true, # search against document titles
-          "tag": true, # search against document tags
-          "content": true # search against document content
-          "attachments": false # search against document attachment titles
+          "doc": true, 
+          "tag": true, 
+          "content": true,
+          "attachments": false 
         }
       }
 parameters:
@@ -159,13 +165,8 @@ parameters:
   name: HOST
   required: false
   value: ''
-- description: The namespace the image is being pulled from
-  displayName: Image namespace
-  name: IMAGE_NAMESPACE
-  required: true
-  value: "devhub-tools"
 - description: Base URL of the Documize instance to be searched
   displayName: Rocket.Chat Base URL
-  name: DOCUGATE_BASE_URL
+  name: DOCUMIZE_BASE_URL
   required: true
   value: "https://docs.pathfinder.gov.bc.ca/"
