@@ -30,3 +30,18 @@ have been abstracted into scripts within `.pipeline/`
   ### With Jenkins
   > please note that eventually build and deploy should and will be controlled via a _jenkins job_. 
   This will automatically build/deploy on the creation of a pr. 
+
+
+## Supported GraphQL Queries
+> graphql queries can be introspected with graphql visualization tools like [GraphQlPlayground](https://github.com/prisma-labs/graphql-playground)
+
+- Searching
+```graphql
+query {
+  search(searchString: "foo", limit: 10) {
+    id
+    ...
+    ...
+  }
+}
+```
