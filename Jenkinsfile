@@ -2,7 +2,7 @@ pipeline {
     agent none
      environment {
                 COMPONENT_NAME = 'Docugate'
-                COMPONENT_HOME = '.pipeline'
+                COMPONENT_HOME = '.'
                 BUILD_TRIGGER_INCLUDES = '^/'
             }
     options {
