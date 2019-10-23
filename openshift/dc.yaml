@@ -1,9 +1,10 @@
 apiVersion: v1
 kind: Template
 metadata:
-  name: rocketgate-dc-templates
+  name: docugate-dc-templates
 labels:
-  template: rocketgate
+  app: docugate
+  template: docugate
 objects:
 - apiVersion: v1
   kind: ImageStream
@@ -16,6 +17,8 @@ objects:
   kind: DeploymentConfig
   metadata:
     name: ${NAME}${SUFFIX}
+    labels:
+      app: docugate
   spec:
     minReadySeconds: 20 # should be ready for atleast 20 seconds before the container is considered available. This will allow us
     # to catch any errors on deploy before they are available to the web
@@ -35,9 +38,13 @@ objects:
         labels:
           deploymentconfig: ${NAME}${SUFFIX}
       spec:
+        volumes:
+        - name: ${NAME}-search-config-volume
+          configMap:
+            name: ${NAME}-search-config
         containers:
         - image: ${NAME}:${VERSION}
-          name: rocketgate
+          name: docugate
           ports:
           - containerPort: 4000
             protocol: TCP
@@ -48,34 +55,23 @@ objects:
             limits:
               cpu: '200m'
               memory: '256Mi'
+          volumeMounts:
+          - name: ${NAME}-search-config-volume
+            mountPath: /opt/app-root/src/config
+            readOnly: true
           env:
-          - name: ROCKETCHAT_AUTH_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: rocketgate-credentials
-                key: token
-          - name: ROCKETCHAT_USER_ID
-            valueFrom:
-              secretKeyRef:
-                name: rocketgate-credentials
-                key: userId
-          - name: ROCKETCHAT_BASE_URL
+          - name: DOCUMIZE_BASE_URL
             valueFrom:
               configMapKeyRef:
-                name: rocketgate-config
-                key: rocketChatURL
-          - name: ROCKETCHAT_ROOM_IDS
-            valueFrom:
-              configMapKeyRef:
-                name: rocketgate-config
-                key: rocketChatRooms
+                name: docugate-config
+                key: documizeBaseUrl
     test: false
     triggers:
     - type: ConfigChange
     - imageChangeParams:
         automatic: true
         containerNames:
-        - rocketgate
+        - docugate
         from:
           kind: ImageStreamTag
           name: ${NAME}:${VERSION}
@@ -84,6 +80,8 @@ objects:
   kind: Service
   metadata:
     name: ${NAME}${SUFFIX}
+    labels:
+      app: docugate
   spec:
     ports:
     - name: web
@@ -95,6 +93,8 @@ objects:
 - apiVersion: route.openshift.io/v1
   kind: Route
   metadata:
+    labels:
+      app: docugate
     annotations:
       haproxy.router.openshift.io/disable_cookies: 'true'
     name: ${NAME}${SUFFIX}
@@ -113,16 +113,43 @@ objects:
 - apiVersion: v1
   kind: ConfigMap
   metadata:
-      name: rocketgate-config
-  stringData:
-    rocketChatRooms: ${ROCKETCHAT_ROOM_IDS}
-    rocketChatURL: ${ROCKETCHAT_BASE_URL}
+    labels:
+      app: docugate
+    name: ${NAME}-config
+  data:
+    documizeBaseUrl: ${DOCUMIZE_BASE_URL}
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    labels:
+      app: docugate
+    name: ${NAME}-search-config
+  data:
+    # this is the additional arguments that are passed to the documizer /api/search request body
+    # in curl it would look like. 
+    # curl https://docs.pathfinder.gov.bc.ca/api/search -X POST -d '{"keywords": "develop", "doc": true, "tag": true, "content": true}'
+    # defaultResultLimit is not passed onto documize api, this is internally consumed
+    # defaultSearchOptions are additional options that are passed to the documize /api/search POST request body
+    #   doc: {Boolean} # search against document titles
+    #   tag: {Boolean} # search against document tags
+    #   content: {Boolean} # search against document content
+    #   attachments: {Boolean} # search against document attachment titles
+    index.json: |-
+      {
+        "defaultResultLimit": 25, 
+        "defaultSearchOptions": {
+          "doc": true, 
+          "tag": true, 
+          "content": true,
+          "attachments": false 
+        }
+      }
 parameters:
 - description: A name used for all objects
   displayName: Name
   name: NAME
   required: true
-  value: rocketgate
+  value: docugate
 - description: A name suffix used for all objects
   displayName: Suffix
   name: SUFFIX
@@ -138,13 +165,8 @@ parameters:
   name: HOST
   required: false
   value: ''
-- description: Base URL of the Rocket.Chat instance to be searched
+- description: Base URL of the Documize instance to be searched
   displayName: Rocket.Chat Base URL
-  name: ROCKETCHAT_BASE_URL
+  name: DOCUMIZE_BASE_URL
   required: true
-  value: "https://chat.pathfinder.gov.bc.ca/api/v1/"
-- description: Rocket.Chat rooms to search
-  displayName: The ids of the Rocket.Chat rooms to be searched
-  name: ROCKETCHAT_ROOM_IDS
-  required: true
-  value: "HfFxBfikEcpnivv4Q"
+  value: "https://docs.pathfinder.gov.bc.ca/"

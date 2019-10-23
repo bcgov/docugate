@@ -16,7 +16,8 @@ module.exports = (settings) => {
         param: {
             NAME: phases[phase].name,
             SUFFIX: phases[phase].suffix,
-            VERSION: phases[phase].tag
+            VERSION: phases[phase].tag,
+            DOCUMIZE_BASE_URL: 'https://docs.pathfinder.gov.bc.ca',
         },
     });
 
