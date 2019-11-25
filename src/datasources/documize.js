@@ -37,7 +37,9 @@ class DocumizeRestAPI extends RESTDataSource {
       keywords,
       ...searchOptions,
     });
-    return data.slice(0, limit).map(this.reduceDocumizeSearch.bind(this));
+    const uniqueSearchResult = _.uniqBy(data, 'documentId');
+
+    return uniqueSearchResult.slice(0, limit).map(this.reduceDocumizeSearch.bind(this));
   }
 }
 
