@@ -66,5 +66,5 @@ const server = new ApolloServer({
 
 // This `listen` method launches a web-server.
 server.listen().then(({url}) => {
-  console.log(`🚀  RocketGate Rocket.Chat GraphQL search gateway ready at ${url}`);
+  console.log(`📖    Ducumize GraphQL search gateway ready at ${url}`);
 });
